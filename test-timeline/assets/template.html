@@ -1,0 +1,108 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: journeys stacked; each step is one row of number, who, what happens, and its tests. */
+:root {
+  --bg: #ffffff; --fg: #1b2230; --muted: #6a7282; --line: #e3e6ec;
+  --person: #b4531a; --app: #2f5bd3; --server: #6b3fb5; --db: #1d7a5c; --external: #8a6d00; --job: #4f6a7d;
+  --new: #c2185b; --pass: #1d7a3c; --fail: #c62828;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171d; --fg: #e6e9ef; --muted: #959eac; --line: #2a303b;
+    --person: #f0995f; --app: #8aa8ff; --server: #b99bf0; --db: #5cc9a2; --external: #e3c45a; --job: #9db6c8;
+    --new: #f47ba8; --pass: #6fd08f; --fail: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171d; --fg: #e6e9ef; --muted: #959eac; --line: #2a303b;
+  --person: #f0995f; --app: #8aa8ff; --server: #b99bf0; --db: #5cc9a2; --external: #e3c45a; --job: #9db6c8;
+  --new: #f47ba8; --pass: #6fd08f; --fail: #ff8a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--sans); font-size: 10px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px;
+}
+h1 { font-size: 13px; font-weight: 600; margin: 0; }
+.sub { color: var(--muted); margin: 2px 0 0; }
+.key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 0 12px; }
+.cols { display: grid; gap: 14px; max-width: 1100px; }
+h2 { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; margin: 0 0 4px; padding-bottom: 3px; border-bottom: 1px solid var(--line); }
+h2 small { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); }
+ol { list-style: none; margin: 0; padding: 0; }
+li { display: grid; grid-template-columns: 16px 76px minmax(0, 1fr) minmax(0, 1.2fr); column-gap: 10px; padding: 2px 0; border-bottom: 1px solid var(--line); }
+li:last-child { border-bottom: 0; }
+.head { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: 9px; }
+.n { font-family: var(--mono); color: var(--muted); text-align: right; }
+.who { font-weight: 600; white-space: nowrap; }
+.who::before { content: "●"; margin-right: 3px; font-size: 8px; vertical-align: 1px; }
+.who.person::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 3px; vertical-align: -1px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='4.5' r='3.5'/%3E%3Cpath d='M1 16c0-4 3.1-6.5 7-6.5s7 2.5 7 6.5z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='4.5' r='3.5'/%3E%3Cpath d='M1 16c0-4 3.1-6.5 7-6.5s7 2.5 7 6.5z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.person { color: var(--person); } .app { color: var(--app); } .server { color: var(--server); } .db { color: var(--db); } .external { color: var(--external); } .job { color: var(--job); }
+.what { min-width: 0; }
+li.new .what { color: var(--new); font-weight: 600; }
+.tests { font-family: var(--mono); font-size: 9.5px; min-width: 0; }
+.t { display: block; overflow-wrap: anywhere; }
+.t.passed { color: var(--pass); }
+.t.failed { color: var(--fail); font-weight: 600; }
+.t.skipped, .t.missing, .t.none { color: var(--muted); }
+.t.weak { color: var(--external); }
+.foot { color: var(--muted); margin: 12px 0 0; max-width: 90ch; }
+@media (max-width: 600px) { li { grid-template-columns: 16px 76px minmax(0, 1fr); } .tests { grid-column: 3; } .head { display: none; } }
+</style>
+
+<h1 id="title"></h1>
+<p class="sub" id="sub"></p>
+<div class="key" id="key"></div>
+<div class="cols" id="cols"></div>
+<p class="foot" id="foot"></p>
+
+<script>
+const DATA = /*__DATA__*/null;
+const mk = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const whoClass = (s) => (s.person ? "person" : s.who);
+const sym = { passed: "✓ ", failed: "✗ FAILED ", skipped: "– skipped ", missing: "? not found " };
+
+document.getElementById("title").textContent = DATA.title;
+document.getElementById("sub").textContent = [DATA.subtitle, "★ marks a new or changed step", "tests: " + DATA.runSummary].filter(Boolean).join(" · ");
+document.getElementById("foot").textContent = (DATA.footnote ? DATA.footnote + " " : "") + "Steps were matched to tests by hand; each pass or fail comes from the test run.";
+
+const seen = new Map();
+DATA.journeys.forEach(j => j.steps.forEach(s => { if (!seen.has(s.label)) seen.set(s.label, s); }));
+const key = document.getElementById("key");
+seen.forEach((s, label) => key.appendChild(mk("span", "who " + whoClass(s), label)));
+
+const cols = document.getElementById("cols");
+for (const j of DATA.journeys) {
+  const col = mk("section");
+  const h = mk("h2", null, j.name + " ");
+  if (j.note) h.appendChild(mk("small", null, "(" + j.note + ")"));
+  col.appendChild(h);
+  const ol = mk("ol");
+  const hd = mk("li", "head");
+  ["#", "Who", "What happens", "Tests"].forEach(t => hd.appendChild(mk("span", null, t)));
+  ol.appendChild(hd);
+  j.steps.forEach((s, i) => {
+    const li = mk("li", s.isNew ? "new" : null);
+    li.appendChild(mk("span", "n", String(i + 1)));
+    li.appendChild(mk("span", "who " + whoClass(s), s.label));
+    li.appendChild(mk("span", "what", (s.isNew ? "★ " : "") + s.what));
+    const t = mk("div", "tests");
+    if (s.tests.length) s.tests.forEach(x => t.appendChild(mk("span", "t " + x.status, sym[x.status] + x.title)));
+    else t.appendChild(mk("span", "t none", "– " + s.none));
+    if (s.weak) t.appendChild(mk("span", "t weak", "! weak: " + s.weak));
+    li.appendChild(t);
+    ol.appendChild(li);
+  });
+  col.appendChild(ol);
+  cols.appendChild(col);
+}
+</script>
